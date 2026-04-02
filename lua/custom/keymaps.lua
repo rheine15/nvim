@@ -75,6 +75,34 @@ function M.telescope(builtin)
     }
   end, { desc = '[B]uild [C]# projects' })
 
+  vim.keymap.set('n', '<leader>br', function()
+    local actions = require 'telescope.actions'
+    local action_state = require 'telescope.actions.state'
+    builtin.find_files {
+      prompt_title = 'dotnet run (.sln / .csproj)',
+      find_command = { 'fd', '-e', 'sln', '-e', 'csproj', '-t', 'f' },
+      attach_mappings = function(prompt_bufnr, map)
+        local function run_close()
+          local entry = action_state.get_selected_entry()
+          actions.close(prompt_bufnr)
+          if entry and entry.path then
+            local path = vim.fn.fnamemodify(entry.path, ':p')
+            local ext = vim.fn.fnamemodify(path, ':e'):lower()
+            if ext == 'csproj' then
+              vim.cmd('split | term sh -lc ' .. vim.fn.shellescape('dotnet run --project ' .. path, true))
+            else
+              local dir = vim.fn.fnamemodify(path, ':h')
+              vim.cmd('split | term sh -lc ' .. vim.fn.shellescape('cd ' .. dir .. ' && dotnet run', true))
+            end
+          end
+        end
+        map('i', '<CR>', run_close)
+        map('n', '<CR>', run_close)
+        return true
+      end,
+    }
+  end, { desc = 'dotnet [R]un (sln → cwd run, csproj → --project)' })
+
   -- --- Current buffer / config ---
   vim.keymap.set('n', '<leader>/', function()
     builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
