@@ -13,6 +13,8 @@ return {
   },
   lazy = false,
   keys = {
+    { '<leader>e', ':Neotree toggle<CR>', desc = 'Toggle file [E]xplorer', silent = true },
+    -- Jump to current file in tree
     { '\\', ':Neotree reveal<CR>', desc = 'NeoTree reveal', silent = true },
   },
   ---@module 'neo-tree'
@@ -26,4 +28,11 @@ return {
       },
     },
   },
+  config = function(_, opts)
+    local ok, devicons = pcall(require, 'nvim-web-devicons')
+    if ok then
+      devicons.setup { default = true }
+    end
+    require('neo-tree').setup(opts)
+  end,
 }
