@@ -100,6 +100,7 @@ vim.g.have_nerd_font = false
 
 -- Make line numbers default
 vim.o.number = true
+vim.o.rnu = true
 -- You can also add relative line numbers, to help with jumping.
 --  Experiment for yourself to see if you like it!
 -- vim.o.relativenumber = true
@@ -405,6 +406,8 @@ require('lazy').setup({
 
       -- See `:help telescope.builtin`
       local builtin = require 'telescope.builtin'
+      vim.keymap.set('n', '<leader>fj', '<cmd>%!jq .<CR>', { desc = '[F]ormat [J]SON' })
+      vim.keymap.set('n', '<leader>fw', '<cmd>%s/\\s*$//e<CR>', { desc = '[F]ormat Trailing [W]hitespace' })
       vim.keymap.set('n', '<leader>sh', builtin.help_tags, { desc = '[S]earch [H]elp' })
       vim.keymap.set('n', '<leader>sk', builtin.keymaps, { desc = '[S]earch [K]eymaps' })
       vim.keymap.set('n', '<leader>sf', builtin.find_files, { desc = '[S]earch [F]iles' })
@@ -416,6 +419,28 @@ require('lazy').setup({
       vim.keymap.set('n', '<leader>s.', builtin.oldfiles, { desc = '[S]earch Recent Files ("." for repeat)' })
       vim.keymap.set('n', '<leader>sc', builtin.commands, { desc = '[S]earch [C]ommands' })
       vim.keymap.set('n', '<leader><leader>', builtin.buffers, { desc = '[ ] Find existing buffers' })
+      vim.keymap.set('n', '<leader>bc', function()
+        local actions = require('telescope.actions')
+        local action_state = require('telescope.actions.state')
+        builtin.find_files({
+          prompt_title = 'dotnet build (csproj/sln)',
+          find_command = { 'fd', '-e', 'csproj', '-e', 'sln', '-t', 'f' },
+          attach_mappings = function(prompt_bufnr, map)
+            local function build_close()
+              local entry = action_state.get_selected_entry()
+              actions.close(prompt_bufnr)
+              if entry and entry.path then
+                -- vim.cmd only valid as a string or { cmd = ..., args = ... }; not { 'split', 'term', ... }
+                vim.cmd('split | term dotnet build ' .. vim.fn.shellescape(entry.path, true))
+              end
+            end
+
+            map('i', '<CR>', build_close)
+            map('n', '<CR>', build_close)
+            return true
+          end,
+        })
+      end, { desc = '[B]uild [C]# projects' })
 
       -- This runs on LSP attach per buffer (see main LSP attach function in 'neovim/nvim-lspconfig' config for more info,
       -- it is better explained there). This allows easily switching between pickers if you prefer using something else!
@@ -424,17 +449,39 @@ require('lazy').setup({
         callback = function(event)
           local buf = event.buf
 
-          -- Find references for the word under your cursor.
-          vim.keymap.set('n', 'grr', builtin.lsp_references, { buffer = buf, desc = '[G]oto [R]eferences' })
+          local function csharp_telescope_or(extended_fn, builtin_fn)
+            return function()
+              local ft = vim.bo.filetype
+              if ft == 'cs' then
+                local ok, ox = pcall(require, 'omnisharp_extended')
+                if ok then
+                  extended_fn(ox)
+                  return
+                end
+              end
+              builtin_fn { bufnr = buf }
+            end
+          end
 
-          -- Jump to the implementation of the word under your cursor.
-          -- Useful when your language has ways of declaring types without an actual implementation.
-          vim.keymap.set('n', 'gri', builtin.lsp_implementations, { buffer = buf, desc = '[G]oto [I]mplementation' })
-
-          -- Jump to the definition of the word under your cursor.
-          -- This is where a variable was first declared, or where a function is defined, etc.
-          -- To jump back, press <C-t>.
-          vim.keymap.set('n', 'grd', builtin.lsp_definitions, { buffer = buf, desc = '[G]oto [D]efinition' })
+          -- OmniSharp's stock LSP implementation request is often empty; omnisharp_extended uses o#/findimplementations.
+          vim.keymap.set(
+            'n',
+            'grr',
+            csharp_telescope_or(function(ox) ox.telescope_lsp_references() end, builtin.lsp_references),
+            { buffer = buf, desc = '[G]oto [R]eferences' }
+          )
+          vim.keymap.set(
+            'n',
+            'gri',
+            csharp_telescope_or(function(ox) ox.telescope_lsp_implementation() end, builtin.lsp_implementations),
+            { buffer = buf, desc = '[G]oto [I]mplementation' }
+          )
+          vim.keymap.set(
+            'n',
+            'grd',
+            csharp_telescope_or(function(ox) ox.telescope_lsp_definition() end, builtin.lsp_definitions),
+            { buffer = buf, desc = '[G]oto [D]efinition' }
+          )
 
           -- Fuzzy find all the symbols in your current document.
           -- Symbols are things like variables, functions, types, etc.
@@ -447,7 +494,12 @@ require('lazy').setup({
           -- Jump to the type of the word under your cursor.
           -- Useful when you're not sure what type a variable is and you want to see
           -- the definition of its *type*, not where it was *defined*.
-          vim.keymap.set('n', 'grt', builtin.lsp_type_definitions, { buffer = buf, desc = '[G]oto [T]ype Definition' })
+          vim.keymap.set(
+            'n',
+            'grt',
+            csharp_telescope_or(function(ox) ox.telescope_lsp_type_definition() end, builtin.lsp_type_definitions),
+            { buffer = buf, desc = '[G]oto [T]ype Definition' }
+          )
         end,
       })
 
@@ -920,7 +972,7 @@ require('lazy').setup({
   --    This is the easiest way to modularize your config.
   --
   --  Uncomment the following line and add your plugins to `lua/custom/plugins/*.lua` to get going.
-  -- { import = 'custom.plugins' },
+  { import = 'custom.plugins' },
   --
   -- For additional information with loading, sourcing and examples see `:help lazy.nvim-🔌-plugin-spec`
   -- Or use telescope!
