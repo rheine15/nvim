@@ -64,9 +64,7 @@ function M.telescope(builtin)
         local function build_close()
           local entry = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
-          if entry and entry.path then
-            vim.cmd('split | term dotnet build ' .. vim.fn.shellescape(entry.path, true))
-          end
+          if entry and entry.path then vim.cmd('split | term dotnet build ' .. vim.fn.shellescape(entry.path, true)) end
         end
         map('i', '<CR>', build_close)
         map('n', '<CR>', build_close)
@@ -103,20 +101,49 @@ function M.telescope(builtin)
     }
   end, { desc = 'dotnet [R]un (sln → cwd run, csproj → --project)' })
 
-  -- --- Current buffer / config ---
-  vim.keymap.set('n', '<leader>/', function()
-    builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
-      winblend = 10,
-      previewer = false,
-    })
-  end, { desc = '[/] Fuzzily search in current buffer' })
-
-  vim.keymap.set('n', '<leader>s/', function()
-    builtin.live_grep {
-      grep_open_files = true,
-      prompt_title = 'Live Grep in Open Files',
+  vim.keymap.set('n', '<leader>bt', function()
+    local actions = require 'telescope.actions'
+    local action_state = require 'telescope.actions.state'
+    builtin.find_files {
+      prompt_title = 'dotnet build (csproj/sln)',
+      find_command = { 'fd', '-e', 'csproj', '-e', 'sln', '-t', 'f' },
+      attach_mappings = function(prompt_bufnr, map)
+        local function build_close()
+          local entry = action_state.get_selected_entry()
+          actions.close(prompt_bufnr)
+          if entry and entry.path then vim.cmd('split | term dotnet test ' .. vim.fn.shellescape(entry.path, true)) end
+        end
+        map('i', '<CR>', build_close)
+        map('n', '<CR>', build_close)
+        return true
+      end,
     }
-  end, { desc = '[S]earch [/] in Open Files' })
+  end, { desc = '[B]uild [T]est projects' })
+
+  -- --- Current buffer / config ---
+  vim.keymap.set(
+    'n',
+    '<leader>/',
+    function()
+      builtin.current_buffer_fuzzy_find(require('telescope.themes').get_dropdown {
+        winblend = 10,
+        previewer = false,
+      })
+    end,
+    { desc = '[/] Fuzzily search in current buffer' }
+  )
+
+  vim.keymap.set(
+    'n',
+    '<leader>s/',
+    function()
+      builtin.live_grep {
+        grep_open_files = true,
+        prompt_title = 'Live Grep in Open Files',
+      }
+    end,
+    { desc = '[S]earch [/] in Open Files' }
+  )
 
   vim.keymap.set('n', '<leader>sn', function() builtin.find_files { cwd = vim.fn.stdpath 'config' } end, { desc = '[S]earch [N]eovim files' })
 
@@ -127,53 +154,19 @@ function M.telescope(builtin)
   })
 end
 
---- Buffer-local Telescope LSP maps. C# uses omnisharp_extended when available.
+--- Buffer-local Telescope LSP maps.
 ---@param builtin telescope.builtin
 function M.telescope_lsp_attach(builtin, event)
   local buf = event.buf
 
-  local function csharp_telescope_or(extended_fn, builtin_fn)
-    return function()
-      local ft = vim.bo.filetype
-      if ft == 'cs' then
-        local ok, ox = pcall(require, 'omnisharp_extended')
-        if ok then
-          extended_fn(ox)
-          return
-        end
-      end
-      builtin_fn { bufnr = buf }
-    end
-  end
-
-  vim.keymap.set(
-    'n',
-    'grr',
-    csharp_telescope_or(function(ox) ox.telescope_lsp_references() end, builtin.lsp_references),
-    { buffer = buf, desc = '[G]oto [R]eferences' }
-  )
-  vim.keymap.set(
-    'n',
-    'gri',
-    csharp_telescope_or(function(ox) ox.telescope_lsp_implementation() end, builtin.lsp_implementations),
-    { buffer = buf, desc = '[G]oto [I]mplementation' }
-  )
-  vim.keymap.set(
-    'n',
-    'grd',
-    csharp_telescope_or(function(ox) ox.telescope_lsp_definition() end, builtin.lsp_definitions),
-    { buffer = buf, desc = '[G]oto [D]efinition' }
-  )
+  vim.keymap.set('n', 'grr', function() builtin.lsp_references { bufnr = buf } end, { buffer = buf, desc = '[G]oto [R]eferences' })
+  vim.keymap.set('n', 'gri', function() builtin.lsp_implementations { bufnr = buf } end, { buffer = buf, desc = '[G]oto [I]mplementation' })
+  vim.keymap.set('n', 'grd', function() builtin.lsp_definitions { bufnr = buf } end, { buffer = buf, desc = '[G]oto [D]efinition' })
 
   vim.keymap.set('n', 'gO', builtin.lsp_document_symbols, { buffer = buf, desc = 'Open Document Symbols' })
   vim.keymap.set('n', 'gW', builtin.lsp_dynamic_workspace_symbols, { buffer = buf, desc = 'Open Workspace Symbols' })
 
-  vim.keymap.set(
-    'n',
-    'grt',
-    csharp_telescope_or(function(ox) ox.telescope_lsp_type_definition() end, builtin.lsp_type_definitions),
-    { buffer = buf, desc = '[G]oto [T]ype Definition' }
-  )
+  vim.keymap.set('n', 'grt', function() builtin.lsp_type_definitions { bufnr = buf } end, { buffer = buf, desc = '[G]oto [T]ype Definition' })
 end
 
 -- =============================================================================

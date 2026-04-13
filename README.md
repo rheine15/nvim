@@ -5,10 +5,27 @@
 A starting point for Neovim that is:
 
 * Small
-* Single-file
-* Completely Documented
+* **Modular-friendly**: a large `init.lua` plus optional Lua modules under `lua/custom/` and `lua/kickstart/plugins/`
+* Completely Documented (upstream README + layout below)
 
 **NOT** a Neovim distribution, but instead a starting point for your configuration.
+
+## Configuration layout
+
+This config keeps kickstart’s teaching-style `init.lua` as the main spine, and splits cross-cutting pieces into separate modules:
+
+| Location | Role |
+| :--- | :--- |
+| [`init.lua`](init.lua) | Leader/options, diagnostics, autocommands, `lazy.nvim` bootstrap, and the primary `lazy.setup({ ... })` plugin list |
+| [`lua/custom/keymaps.lua`](lua/custom/keymaps.lua) | General keymaps, Telescope, and LSP-on-attach maps (`require('custom.keymaps')`) |
+| [`lua/custom/smart_cd.lua`](lua/custom/smart_cd.lua) | Directory-smart `cwd` on `BufEnter` and `:SmartCdToggle` |
+| [`lua/custom/plugins/init.lua`](lua/custom/plugins/init.lua) | Lazy `{ import = 'custom.plugins' }` entry: returns specs and can `import` other files in this folder |
+| [`lua/custom/plugins/*.lua`](lua/custom/plugins/) | Your own plugin specs (e.g. `dotnet.lua`) |
+| [`lua/kickstart/plugins/*.lua`](lua/kickstart/plugins/) | Optional kickstart plugin presets; enable with `require 'kickstart.plugins.<name>'` inside `init.lua` (neo-tree is enabled this way) |
+| [`lua/kickstart/health.lua`](lua/kickstart/health.lua) | Optional `:checkhealth kickstart` checks (version, common CLI tools) |
+| [`doc/kickstart.txt`](doc/kickstart.txt) | Vim help tags for kickstart notes |
+
+To add plugins without growing `init.lua`, put a spec file under `lua/custom/plugins/` and add `{ import = 'custom.plugins.<filename>' }` from [`lua/custom/plugins/init.lua`](lua/custom/plugins/init.lua) (see the existing `dotnet` import).
 
 ## Installation
 
@@ -116,9 +133,10 @@ the current plugin status. Hit `q` to close the window.
 
 #### Read The Friendly Documentation
 
-Read through the `init.lua` file in your configuration folder for more
-information about extending and exploring Neovim. That also includes
-examples of adding popularly requested plugins.
+Read through [`init.lua`](init.lua) top to bottom, then the modules under
+[`lua/custom/`](lua/custom/) and any enabled files in
+[`lua/kickstart/plugins/`](lua/kickstart/plugins/). Those files are where
+extensions, keymaps, and extra plugins are wired in.
 
 > [!NOTE]
 > For more information about a particular plugin check its repository's documentation.
@@ -147,16 +165,9 @@ examples of adding popularly requested plugins.
     distribution that you would like to try out.
 * What if I want to "uninstall" this configuration:
   * See [lazy.nvim uninstall](https://lazy.folke.io/usage#-uninstalling) information
-* Why is the kickstart `init.lua` a single file? Wouldn't it make sense to split it into multiple files?
-  * The main purpose of kickstart is to serve as a teaching tool and a reference
-    configuration that someone can easily use to `git clone` as a basis for their own.
-    As you progress in learning Neovim and Lua, you might consider splitting `init.lua`
-    into smaller parts. A fork of kickstart that does this while maintaining the
-    same functionality is available here:
-    * [kickstart-modular.nvim](https://github.com/dam9000/kickstart-modular.nvim)
-  * Discussions on this topic can be found here:
-    * [Restructure the configuration](https://github.com/nvim-lua/kickstart.nvim/issues/218)
-    * [Reorganize init.lua into a multi-file setup](https://github.com/nvim-lua/kickstart.nvim/pull/473)
+* Why is upstream kickstart’s `init.lua` mostly a single file? Wouldn't it make sense to split it?
+  * Upstream keeps one file so newcomers can read one linear story. **This repo already uses a hybrid:** most plugins stay in `init.lua`, while keymaps, smart cwd, `custom.plugins`, and optional `kickstart.plugins.*` specs live under `lua/`. For a fully modular kickstart-style layout, see [kickstart-modular.nvim](https://github.com/dam9000/kickstart-modular.nvim).
+  * Related upstream discussion: [Restructure the configuration](https://github.com/nvim-lua/kickstart.nvim/issues/218), [Reorganize init.lua into a multi-file setup](https://github.com/nvim-lua/kickstart.nvim/pull/473)
 
 ### Install Recipes
 

@@ -95,6 +95,19 @@ vim.g.maplocalleader = ' '
 -- If glyphs show as empty boxes, the terminal is not using that font — set this back to false.
 vim.g.have_nerd_font = true
 
+-- JetBrains Mono Nerd Font
+-- • Terminal nvim: set the same font in your terminal (iTerm2, Kitty, WezTerm, Ghostty, …).
+--   If icons break, try the “Mono” variant (narrower glyphs): JetBrainsMono Nerd Font Mono
+-- • Neovide / nvim-qt: guifont applies. If it fails, run `:set guifont=*` to pick a face.
+local jetbrains_nerd = 'JetBrainsMono Nerd Font Mono:h13'
+if vim.g.neovide then
+  vim.o.guifont = jetbrains_nerd
+  -- Optional Neovide tweaks: https://neovide.dev/configuration.html
+  -- vim.g.neovide_scale_factor = 1.0
+elseif vim.fn.has 'gui_running' == 1 then
+  vim.o.guifont = jetbrains_nerd
+end
+
 -- [[ Setting options ]]
 -- See `:help vim.o`
 -- NOTE: You can change these options as you wish!
