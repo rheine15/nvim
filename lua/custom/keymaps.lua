@@ -104,17 +104,41 @@ function M.telescope(builtin)
   vim.keymap.set('n', '<leader>bt', function()
     local actions = require 'telescope.actions'
     local action_state = require 'telescope.actions.state'
+
+    local test_project_fd = { 'fd', '-i', 'test', '-e', 'csproj', '-e', 'sln', '-t', 'f' }
+
+    local function run_dotnet_test(path)
+      path = vim.fn.fnamemodify(path, ':p')
+      vim.cmd('split | term dotnet test ' .. vim.fn.shellescape(path, true))
+    end
+
+    local paths = vim.fn.systemlist(test_project_fd)
+    if vim.v.shell_error ~= 0 then
+      vim.notify('fd failed (is fd installed?)', vim.log.levels.ERROR)
+      return
+    end
+    if #paths == 0 then
+      vim.notify('No .csproj/.sln with "test" in the path (under cwd)', vim.log.levels.WARN)
+      return
+    end
+    if #paths == 1 then
+      run_dotnet_test(paths[1])
+      return
+    end
+
     builtin.find_files {
-      prompt_title = 'dotnet build (csproj/sln)',
-      find_command = { 'fd', '-e', 'csproj', '-e', 'sln', '-t', 'f' },
+      prompt_title = 'dotnet test (path contains "test")',
+      find_command = test_project_fd,
       attach_mappings = function(prompt_bufnr, map)
-        local function build_close()
+        local function test_close()
           local entry = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
-          if entry and entry.path then vim.cmd('split | term dotnet test ' .. vim.fn.shellescape(entry.path, true)) end
+          if entry and entry.path then
+            run_dotnet_test(entry.path)
+          end
         end
-        map('i', '<CR>', build_close)
-        map('n', '<CR>', build_close)
+        map('i', '<CR>', test_close)
+        map('n', '<CR>', test_close)
         return true
       end,
     }

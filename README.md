@@ -10,6 +10,8 @@ A starting point for Neovim that is:
 
 **NOT** a Neovim distribution, but instead a starting point for your configuration.
 
+**System dependencies and macOS/Linux install steps:** see [SETUP.md](SETUP.md).
+
 ## Configuration layout
 
 This config keeps kickstart’s teaching-style `init.lua` as the main spine, and splits cross-cutting pieces into separate modules:
