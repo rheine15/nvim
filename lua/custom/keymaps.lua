@@ -28,6 +28,10 @@ function M.general()
   vim.keymap.set({ 'n', 'x' }, '<leader>f', function() require('conform').format { async = true, lsp_format = 'fallback' } end, { desc = '[F]ormat buffer' })
 
   vim.keymap.set('n', '<leader>tc', function() require('custom.smart_cd').toggle() end, { desc = '[T]oggle smart [C]wd (see :SmartCdToggle)' })
+
+  -- Back and forward file navigation
+  --vim.keymap.set('n', '<leader>gh', bprev, { desc = 'Previous buffer' })
+  --vim.keymap.set('n', '<leader>gl', bprev, { desc = 'Next buffer' })
 end
 
 -- =============================================================================
