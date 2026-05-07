@@ -29,9 +29,20 @@ function M.general()
 
   vim.keymap.set('n', '<leader>tc', function() require('custom.smart_cd').toggle() end, { desc = '[T]oggle smart [C]wd (see :SmartCdToggle)' })
 
-  -- Back and forward file navigation
-  --vim.keymap.set('n', '<leader>gh', bprev, { desc = 'Previous buffer' })
-  --vim.keymap.set('n', '<leader>gl', bprev, { desc = 'Next buffer' })
+  -- Back and forward buffer navigation
+  vim.keymap.set('n', '<leader>gh', '<cmd>bprevious<CR>', { desc = 'Previous buffer' })
+  vim.keymap.set('n', '<leader>gl', '<cmd>bnext<CR>', { desc = 'Next buffer' })
+
+  -- Yank absolute path of current buffer (unnamed + clipboard)
+  vim.keymap.set('n', '<leader>yp', function()
+    local path = vim.fn.expand('%:p')
+    if path == '' then
+      vim.notify('No file path for this buffer', vim.log.levels.WARN)
+      return
+    end
+    vim.fn.setreg('"', path)
+    vim.fn.setreg('+', path)
+  end, { desc = 'Yank full file [P]ath' })
 end
 
 -- =============================================================================
