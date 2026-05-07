@@ -27,6 +27,16 @@ return {
         },
       },
     },
+    -- Neo-tree runs `setlocal nonumber norelativenumber` on BufEnter; this runs right after.
+    event_handlers = {
+      {
+        event = 'neo_tree_buffer_enter',
+        handler = function()
+          vim.opt_local.number = true
+          vim.opt_local.relativenumber = true
+        end,
+      },
+    },
   },
   config = function(_, opts)
     local ok, devicons = pcall(require, 'nvim-web-devicons')

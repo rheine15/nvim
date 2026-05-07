@@ -59,7 +59,12 @@ local function repos_first_segment(path_abs)
   if not name or name == '' then
     return nil
   end
-  return repos .. '/' .. name
+  local candidate = repos .. '/' .. name
+  -- e.g. ~/repos/steps.txt → name is "steps.txt" (a file); don’t treat as repo root
+  if vim.fn.isdirectory(candidate) ~= 1 then
+    return nil
+  end
+  return candidate
 end
 
 ---@param bufnr integer
