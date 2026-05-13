@@ -53,6 +53,16 @@ end
 function M.telescope(builtin)
   -- --- Formatting helpers (buffer) ---
   vim.keymap.set('n', '<leader>fj', '<cmd>%!jq .<CR>', { desc = '[F]ormat [J]SON' })
+  vim.keymap.set('n', '<leader>fx', function()
+    -- xmllint: macOS often ships it; Linux → Debian/Ubuntu: `sudo apt install libxml2-utils`
+    -- Fedora: `dnf install libxml2`; Arch: `pacman -S libxml2`
+    if vim.fn.executable 'xmllint' == 0 then
+      vim.notify('xmllint not on PATH (Linux: libxml2-utils / libxml2; macOS: libxml2 via brew)', vim.log.levels.ERROR)
+      return
+    end
+    -- Pretty-print XML; reads entire buffer from stdin
+    vim.cmd '%!xmllint --format -'
+  end, { desc = '[F]ormat [X]ML (xmllint)' })
   vim.keymap.set('n', '<leader>fw', '<cmd>%s/\\s*$//e<CR>', { desc = '[F]ormat Trailing [W]hitespace' })
 
   -- --- Search / pickers (<leader>s…) ---
